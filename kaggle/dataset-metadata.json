@@ -8,6 +8,7 @@
       "name": "CC-BY-SA-4.0"
     }
   ],
+  "image": "portada.png",
   "keywords": [
     "biology",
     "computer vision",
@@ -15,7 +16,7 @@
     "animals",
     "south america"
   ],
-  "resources": [
+  "data": [
     {
       "path": "observaciones.csv",
       "description": "Las 400 observaciones, una por fila, con la etiqueta de GBIF y la del modelo enfrentadas.",

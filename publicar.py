@@ -80,14 +80,23 @@ def exportar():
                     "contra la del modelo",
         "description": _descripcion(n, esp, ok),
         "licenses": [{"name": "CC-BY-SA-4.0"}],
+
+        # **La portada va aquí, no se sube como fichero.** Kaggle la trata como
+        # metadato: `dataset_metadata_update` la lee de este campo y la sube
+        # aparte. Dejarla suelta en la carpeta la publica como un CSV más y la
+        # portada sigue siendo la genérica.
+        "image": "portada.png",
         # **Kaggle no acepta etiquetas inventadas**: son un vocabulario cerrado
         # y rechaza la actualizacion entera si una no existe. «biodiversity» o
         # «citizen-science» suenan razonables y no estan.
         "keywords": ["biology", "computer vision", "classification",
                      "animals", "south america"],
-        # Describir cada fichero y cada columna es lo que evita que quien
-        # descargue tenga que adivinar qué significa `en_top3`.
-        "resources": [
+        # **Va en `data`, no en `resources`.** Los dos describen lo mismo, pero
+        # `dataset_metadata_update` solo mira `data`: con las descripciones en
+        # `resources` la llamada dice que sí, devuelve `None` y la página sigue
+        # enseñando «This file does not have a description yet». Costó dos
+        # intentos descubrirlo leyendo el código del cliente.
+        "data": [
             {
                 "path": "observaciones.csv",
                 "description": f"Las {n} observaciones, una por fila, con la "
