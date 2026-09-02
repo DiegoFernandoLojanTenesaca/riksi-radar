@@ -1,1 +1,8 @@
 kafka-python-ng   # cliente de Kafka. El `kafka-python` original lleva sin tocarse desde 2020
+onnxruntime       # corre el modelo de Riksi sobre cada foto
+pillow
+numpy
+duckdb            # el almacen analitico, en un fichero
+prefect==3.8.4    # la orquestacion. Fijada: sin fijar, pip retrocede a una
+                  # version vieja que arrastra SQLAlchemy 1.4 y lo compila
+                  # desde fuente durante media hora
