@@ -23,10 +23,18 @@ SALIDA = AQUI / "kaggle" / "portada.png"
 # misma familia sin tener que decirlo.
 BASALTO, LIQUEN, PAPEL, TENUE = "#14181b", "#c7c24b", "#e4e5df", "#8a938d"
 
-# Kaggle recorta la portada a un rectángulo ancho en el listado y la enseña
-# pequeña, así que el dibujo tiene que llenar el lienzo. La primera versión
-# usaba 1200x630 con barras de 130 px y márgenes de 150: se veía como cinco
-# palitos perdidos en un fondo negro.
+# **Kaggle la enseña a 280x140, no a tamaño completo.** Medido en la página: la
+# cabecera del dataset la pinta a 280 px de ancho y el listado a unos 180. Eso
+# cambia el diseño entero, porque a esa escala un texto de 18 px del original se
+# convierte en 4 px y desaparece.
+#
+# La primera versión tenía tres líneas de título, etiquetas bajo cada barra y un
+# pie explicativo: a 280 px todo eso era una mancha gris. Aquí se queda lo que
+# sobrevive al encogerse -pocas palabras, muy grandes- y el detalle se deja para
+# quien abra la imagen entera.
+#
+# Se dibuja a 1200x600 y se sirve así porque el original grande se ve nítido al
+# ampliarlo; lo que cambia son las proporciones, no el tamaño del lienzo.
 ANCHO, ALTO = 1200, 600
 
 
@@ -54,63 +62,59 @@ def datos():
 
 
 def svg(filas, total):
-    """Cinco barras que llenan el lienzo, no cinco palitos en un fondo.
+    """Un dibujo que aguanta reducido a una cuarta parte.
 
-    El ancho de barra sale de dividir el espacio disponible, en vez de estar
-    fijado a ojo: así el dibujo se adapta si algún día hay más tramos.
+    Todo se dimensiona pensando en el 23 % —280 de 1200—, que es a lo que Kaggle
+    lo enseña. Un título de 46 px queda en 11; uno de 76, en 18, que sí se lee.
     """
-    # 190 arriba deja sitio a la cifra sobre la barra mas alta: con 175 el «98 %»
-    # rozaba el subtitulo. Y 105 abajo separa el pie de las etiquetas.
-    izq, der, arriba, abajo = 70, 70, 190, 105
+    izq, der, arriba, abajo = 60, 60, 210, 118
     util = ANCHO - izq - der
     base = ALTO - abajo
     alto_max = base - arriba
 
-    hueco = 22
+    hueco = 18
     ancho_barra = (util - hueco * (len(filas) - 1)) / len(filas)
 
     partes = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{ANCHO}" height="{ALTO}" '
         f'viewBox="0 0 {ANCHO} {ALTO}">',
         f'<rect width="{ANCHO}" height="{ALTO}" fill="{BASALTO}"/>',
-        f'<text x="{izq}" y="66" fill="{PAPEL}" font-size="46" font-weight="600" '
+
+        # Dos líneas y nada más. El subtítulo largo y el pie explicativo de la
+        # versión anterior no se leían y solo añadían ruido gris.
+        f'<text x="{izq}" y="82" fill="{PAPEL}" font-size="76" font-weight="700" '
         f'font-family="Georgia, serif">Riksi Radar</text>',
-        f'<text x="{izq}" y="108" fill="{LIQUEN}" font-size="27" '
+        f'<text x="{izq}" y="146" fill="{LIQUEN}" font-size="42" font-weight="500" '
         f'font-family="system-ui, sans-serif">'
-        f'La confianza del modelo predice el acierto</text>',
-        f'<text x="{izq}" y="142" fill="{TENUE}" font-size="18" '
-        f'font-family="system-ui, sans-serif">'
-        f'{total} observaciones del Ecuador · medido en el campo, no en validación</text>',
+        f'La confianza predice el acierto</text>',
     ]
 
     for i, (tramo, n, acierta) in enumerate(filas):
         x = izq + i * (ancho_barra + hueco)
-        alto = max(8, alto_max * acierta / 100)
+        alto = max(10, alto_max * acierta / 100)
         y = base - alto
         centro = x + ancho_barra / 2
-        # El contorno marca el 100 %: sin él no se ve cuánto falta y las barras
-        # parecen absolutas en vez de porcentajes.
         partes += [
             f'<rect x="{x:.0f}" y="{arriba}" width="{ancho_barra:.0f}" '
-            f'height="{alto_max}" fill="{PAPEL}" opacity=".05" rx="5"/>',
+            f'height="{alto_max}" fill="{PAPEL}" opacity=".06" rx="6"/>',
             f'<rect x="{x:.0f}" y="{y:.0f}" width="{ancho_barra:.0f}" '
-            f'height="{alto:.0f}" fill="{LIQUEN}" rx="5"/>',
-            f'<text x="{centro:.0f}" y="{y - 16:.0f}" fill="{PAPEL}" '
-            f'font-size="32" font-weight="600" text-anchor="middle" '
+            f'height="{alto:.0f}" fill="{LIQUEN}" rx="6"/>',
+            # La cifra es lo único que tiene que sobrevivir a la reducción, así
+            # que va grande y dentro de la barra cuando cabe: sobre fondo liquen
+            # contrasta más que sobre el negro.
+            f'<text x="{centro:.0f}" y="{(y + 52) if alto > 78 else (y - 18):.0f}" '
+            f'fill="{BASALTO if alto > 78 else PAPEL}" font-size="46" '
+            f'font-weight="700" text-anchor="middle" '
             f'font-family="system-ui, sans-serif">{acierta:.0f}%</text>',
-            f'<text x="{centro:.0f}" y="{base + 30}" fill="{PAPEL}" '
-            f'font-size="19" text-anchor="middle" '
-            f'font-family="system-ui, sans-serif">{tramo}%</text>',
-            f'<text x="{centro:.0f}" y="{base + 52}" fill="{TENUE}" '
-            f'font-size="15" text-anchor="middle" '
-            f'font-family="system-ui, sans-serif">n={n}</text>',
+            f'<text x="{centro:.0f}" y="{base + 42}" fill="{TENUE}" '
+            f'font-size="30" text-anchor="middle" '
+            f'font-family="system-ui, sans-serif">{tramo}</text>',
         ]
 
     partes += [
-        f'<text x="{izq}" y="{ALTO - 22}" fill="{TENUE}" font-size="16" '
+        f'<text x="{izq}" y="{ALTO - 26}" fill="{TENUE}" font-size="27" '
         f'font-family="system-ui, sans-serif">'
-        f'confianza que el modelo dio a su respuesta  →  cuánto acertó de verdad'
-        f'</text>',
+        f'{total} observaciones · confianza del modelo → acierto real</text>',
         "</svg>",
     ]
     return "\n".join(partes)
