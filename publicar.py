@@ -68,8 +68,9 @@ def exportar():
     cx.close()
 
     (SALIDA / "dataset-metadata.json").write_text(json.dumps({
-        "title": "Riksi Radar: modelo vs etiqueta humana en fauna del Ecuador",
-        "id": "PONER_USUARIO/riksi-radar-ecuador",
+        # El título va corto porque Kaggle lo limita a 50 caracteres.
+        "title": "Riksi Radar: modelo vs humano en fauna EC",
+        "id": "diegofernandoljtn/riksi-radar-ecuador",
         "licenses": [{"name": "CC-BY-SA-4.0"}],
         "keywords": ["biology", "computer-vision", "ecuador", "biodiversity",
                      "model-evaluation", "citizen-science"],
