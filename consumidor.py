@@ -173,7 +173,74 @@ def _guardar(cx, m, visto):
          time.strftime("%Y-%m-%d %H:%M:%S")])
 
 
-def consumir(tope=None, servidor="localhost:9092", grupo="radar"):
+def consumir(tope=None, servidor="localhost:9092", grupo="radar", por_tanda=40):
+    """Consume en tandas, reconectando entre una y otra.
+
+    **Una sola sesión larga no aguanta.** Con cientos de mensajes a dos segundos
+    cada uno, `kafka-python` acaba reventando en Python 3.14 con «Invalid file
+    descriptor: -1»: el socket se cierra por debajo y la librería no lo maneja.
+    Y como el fallo llega al final, se pierde todo lo procesado en esa sesión.
+
+    Reconectar cada tanda acota el daño: lo confirmado queda confirmado, y la
+    siguiente sesión arranca donde quedó la anterior. Cuesta un apretón de manos
+    con el broker cada cuarenta mensajes, que al lado de dos segundos por foto no
+    se nota.
+    """
+    total = 0
+    while True:
+        cuantos = por_tanda if tope is None else min(por_tanda, tope - total)
+        if cuantos <= 0:
+            break
+        n = _una_tanda(cuantos, servidor, grupo)
+        total += n
+        if n < cuantos:          # se acabaron los mensajes
+            break
+    return total
+
+
+def _blindar_selector():
+    """Que cerrar un socket ya cerrado no tumbe el proceso.
+
+    **Bug de `kafka-python` en Python 3.14.** Al reciclar una conexión llama a
+    `selector.unregister(sock)` sobre un socket cuyo descriptor ya es -1, y
+    desde 3.14 `selectors` lanza `ValueError: Invalid file descriptor: -1` en
+    vez de ignorarlo. La excepción sube por el bucle interno de la librería y
+    mata la sesión entera, con todo lo procesado sin confirmar.
+
+    No es un fallo que se pueda arreglar desde fuera: la llamada está dentro de
+    la librería. Así que se envuelve `unregister` para que un descriptor
+    inválido sea lo que era antes, un no-op. Todo lo demás sigue propagándose.
+    """
+    import selectors
+
+    if getattr(selectors.BaseSelector, "_riksi_blindado", False):
+        return
+    # Los que existan en esta plataforma: `PollSelector` no está en Windows y
+    # `EpollSelector` solo en Linux, así que no se pueden nombrar a ciegas.
+    clases = {c for c in (getattr(selectors, n, None) for n in
+                          ("SelectSelector", "PollSelector", "EpollSelector",
+                           "KqueueSelector", "DevpollSelector", "DefaultSelector"))
+              if c is not None}
+    for clase in clases:
+        original = getattr(clase, "unregister", None)
+        if original is None or getattr(original, "_riksi", False):
+            continue
+
+        def envuelto(self, fileobj, _original=original):
+            try:
+                return _original(self, fileobj)
+            except (ValueError, KeyError):
+                # El socket ya no existe: quitarlo del selector es justo lo que
+                # se pretendía.
+                return None
+
+        envuelto._riksi = True
+        clase.unregister = envuelto
+    selectors.BaseSelector._riksi_blindado = True
+
+
+def _una_tanda(tope, servidor, grupo):
+    _blindar_selector()
     from kafka import KafkaConsumer
 
     consumidor = KafkaConsumer(
@@ -221,13 +288,18 @@ def consumir(tope=None, servidor="localhost:9092", grupo="radar"):
         if tope and n >= tope:
             break
 
-    consumidor.close()
+    try:
+        consumidor.close()
+    except Exception:
+        # Cerrar puede fallar por el mismo motivo que rompía la sesión larga.
+        # Los mensajes ya están confirmados y guardados, así que da igual.
+        pass
+
     ciertas = aciertos + desacuerdos
-    print(f"\n{n} procesadas · {aciertos} coinciden · {desacuerdos} en desacuerdo "
-          f"· {dudosas} sin confianza · {sin_foto} sin foto")
-    if ciertas:
-        print(f"  de las {ciertas} que el modelo dio por seguras, coincide en "
-              f"{100*aciertos/ciertas:.0f}%")
+    if n:
+        print(f"  {n} procesadas · {aciertos} coinciden · {desacuerdos} en "
+              f"desacuerdo · {dudosas} sin confianza · {sin_foto} sin foto"
+              + (f" · {100*aciertos/ciertas:.0f}% de acierto" if ciertas else ""))
     cx.close()
     return n
 
