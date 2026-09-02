@@ -91,12 +91,30 @@ def exportar():
         # «citizen-science» suenan razonables y no estan.
         "keywords": ["biology", "computer vision", "classification",
                      "animals", "south america"],
-        # **Va en `data`, no en `resources`.** Los dos describen lo mismo, pero
-        # `dataset_metadata_update` solo mira `data`: con las descripciones en
-        # `resources` la llamada dice que sí, devuelve `None` y la página sigue
-        # enseñando «This file does not have a description yet». Costó dos
-        # intentos descubrirlo leyendo el código del cliente.
-        "data": [
+
+        # Los cuatro campos que Kaggle pide y que suben la nota de usabilidad.
+        # No son burocracia: quien descarga un dataset necesita saber de dónde
+        # salieron los datos y si van a seguir creciendo.
+        "userSpecifiedSources": (
+            "Observaciones y fotografías de GBIF (gbif.org), filtradas a Ecuador "
+            "y a las 100 especies que el clasificador reconoce. Cada foto se "
+            "pasó por el modelo sin dejarle ver la etiqueta que traía. Las "
+            "fotos son de quienes las tomaron, cada una con su licencia en la "
+            "columna correspondiente."),
+        "collectionMethodology": (
+            "Un pipeline de streaming toma las observaciones nuevas de la API "
+            "de GBIF, las emite a Kafka y un consumidor descarga cada foto y la "
+            "clasifica con el modelo de Riksi, un EfficientNet-Lite0 de 3,8 MB. "
+            "Las dos etiquetas y la confianza se guardan en DuckDB y dbt las "
+            "modela. El código está en github.com/DiegoFernandoLojanTenesaca/"
+            "riksi-radar y se puede reproducir entero."),
+        "expectedUpdateFrequency": "quarterly",
+        # **En `resources` y no en `data`.** El cliente convierte el primero al
+        # segundo -renombrando `path` a `name` y `schema.fields` a `columns`-,
+        # pero solo si `data` no existe. Poniéndolo ya en `data` con la forma de
+        # `resources`, la conversión se salta y las descripciones se pierden sin
+        # que nada avise.
+        "resources": [
             {
                 "path": "observaciones.csv",
                 "description": f"Las {n} observaciones, una por fila, con la "
@@ -144,7 +162,12 @@ def exportar():
                                "y qué se dejó fuera a propósito.",
             },
         ],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+        # `ensure_ascii=True` a propósito, aunque el fichero quede feo: el
+        # cliente de Kaggle abre este JSON con `open(f, "r")` sin encoding, y en
+        # Windows eso es cp1252. Con los acentos en UTF-8 crudo llegaban rotos
+        # -«subiÃ³», «GalÃ¡pagos»- a la página pública. Con los escapes \uXXXX
+        # el fichero es ASCII puro y cualquier lectura lo interpreta igual.
+    }, ensure_ascii=True, indent=2), encoding="utf-8")
 
     (SALIDA / "README.md").write_text(_ficha(n, esp, ok), encoding="utf-8")
     print(f"  {n} observaciones · {esp} especies · {ok} coinciden ({100*ok/n:.0f}%)")

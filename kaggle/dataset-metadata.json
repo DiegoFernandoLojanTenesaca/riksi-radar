@@ -2,7 +2,7 @@
   "title": "Riksi Radar: modelo vs humano en fauna EC",
   "id": "diegofernandoljtn/riksi-radar-ecuador",
   "subtitle": "400 observaciones del Ecuador: la etiqueta humana contra la del modelo",
-  "description": "400 observaciones de fauna y flora del Ecuador, cada una con **dos respuestas a la misma pregunta**: la especie que puso quien subió la foto a GBIF, y la que vio un clasificador que nunca supo esa etiqueta. Coinciden en 84 % de los casos; lo interesante es el resto.\n\nHay muchos datasets de fauna y muchos de clasificación de imágenes. Lo que no abunda es uno donde las dos etiquetas estén enfrentadas con la confianza del modelo al lado, que es lo que permite preguntarse qué especies se confunden **en el campo** y si un umbral calibrado en validación aguanta fuera de su reparto.\n\nY aguanta: el mismo modelo acierta 78,0 % en su banco de validación y 84,2 % aquí, sobre fotos subidas después y por gente distinta. La confianza además está calibrada — 31 % de acierto en el tramo 0-20 % y 98 % en el 80-100 %, subiendo en cada tramo intermedio.\n\nLos desacuerdos no son ruido. Tres veces *Chelonoidis niger* contra *porteri*, dos tortugas de Galápagos con la taxonomía en disputa entre biólogos; la iguana marina contra la lagartija de lava, que comparten roca y postura.\n\n**No incluye** el nombre de quien subió cada observación: esas personas suben sus fotos para ciencia ciudadana, no para aparecer en un dataset. La URL de la foto sí, con su licencia al lado.\n\nLo genera [riksi-radar](https://github.com/DiegoFernandoLojanTenesaca/riksi-radar) — Kafka, DuckDB y dbt — clasificando con [Riksi](https://github.com/DiegoFernandoLojanTenesaca/riski), un EfficientNet-Lite0 de 3,8 MB que corre en el navegador.",
+  "description": "400 observaciones de fauna y flora del Ecuador, cada una con **dos respuestas a la misma pregunta**: la especie que puso quien subi\u00f3 la foto a GBIF, y la que vio un clasificador que nunca supo esa etiqueta. Coinciden en 84 % de los casos; lo interesante es el resto.\n\nHay muchos datasets de fauna y muchos de clasificaci\u00f3n de im\u00e1genes. Lo que no abunda es uno donde las dos etiquetas est\u00e9n enfrentadas con la confianza del modelo al lado, que es lo que permite preguntarse qu\u00e9 especies se confunden **en el campo** y si un umbral calibrado en validaci\u00f3n aguanta fuera de su reparto.\n\nY aguanta: el mismo modelo acierta 78,0 % en su banco de validaci\u00f3n y 84,2 % aqu\u00ed, sobre fotos subidas despu\u00e9s y por gente distinta. La confianza adem\u00e1s est\u00e1 calibrada \u2014 31 % de acierto en el tramo 0-20 % y 98 % en el 80-100 %, subiendo en cada tramo intermedio.\n\nLos desacuerdos no son ruido. Tres veces *Chelonoidis niger* contra *porteri*, dos tortugas de Gal\u00e1pagos con la taxonom\u00eda en disputa entre bi\u00f3logos; la iguana marina contra la lagartija de lava, que comparten roca y postura.\n\n**No incluye** el nombre de quien subi\u00f3 cada observaci\u00f3n: esas personas suben sus fotos para ciencia ciudadana, no para aparecer en un dataset. La URL de la foto s\u00ed, con su licencia al lado.\n\nLo genera [riksi-radar](https://github.com/DiegoFernandoLojanTenesaca/riksi-radar) \u2014 Kafka, DuckDB y dbt \u2014 clasificando con [Riksi](https://github.com/DiegoFernandoLojanTenesaca/riski), un EfficientNet-Lite0 de 3,8 MB que corre en el navegador.",
   "licenses": [
     {
       "name": "CC-BY-SA-4.0"
@@ -16,7 +16,10 @@
     "animals",
     "south america"
   ],
-  "data": [
+  "userSpecifiedSources": "Observaciones y fotograf\u00edas de GBIF (gbif.org), filtradas a Ecuador y a las 100 especies que el clasificador reconoce. Cada foto se pas\u00f3 por el modelo sin dejarle ver la etiqueta que tra\u00eda. Las fotos son de quienes las tomaron, cada una con su licencia en la columna correspondiente.",
+  "collectionMethodology": "Un pipeline de streaming toma las observaciones nuevas de la API de GBIF, las emite a Kafka y un consumidor descarga cada foto y la clasifica con el modelo de Riksi, un EfficientNet-Lite0 de 3,8 MB. Las dos etiquetas y la confianza se guardan en DuckDB y dbt las modela. El c\u00f3digo est\u00e1 en github.com/DiegoFernandoLojanTenesaca/riksi-radar y se puede reproducir entero.",
+  "expectedUpdateFrequency": "quarterly",
+  "resources": [
     {
       "path": "observaciones.csv",
       "description": "Las 400 observaciones, una por fila, con la etiqueta de GBIF y la del modelo enfrentadas.",
@@ -24,15 +27,15 @@
         "fields": [
           {
             "name": "clave",
-            "description": "Identificador de la observación en GBIF."
+            "description": "Identificador de la observaci\u00f3n en GBIF."
           },
           {
             "name": "especie",
-            "description": "La especie que puso quien subió la foto."
+            "description": "La especie que puso quien subi\u00f3 la foto."
           },
           {
             "name": "cuando",
-            "description": "Fecha de la observación."
+            "description": "Fecha de la observaci\u00f3n."
           },
           {
             "name": "provincia",
@@ -56,15 +59,15 @@
           },
           {
             "name": "conjunto",
-            "description": "Colección de GBIF de la que procede."
+            "description": "Colecci\u00f3n de GBIF de la que procede."
           },
           {
             "name": "licencia",
-            "description": "La de la foto, que es de quien la tomó."
+            "description": "La de la foto, que es de quien la tom\u00f3."
           },
           {
             "name": "foto",
-            "description": "URL pública de la imagen clasificada."
+            "description": "URL p\u00fablica de la imagen clasificada."
           },
           {
             "name": "modelo_dice",
@@ -76,7 +79,7 @@
           },
           {
             "name": "seguro",
-            "description": "Si superó el umbral calibrado del modelo (0,20)."
+            "description": "Si super\u00f3 el umbral calibrado del modelo (0,20)."
           },
           {
             "name": "en_top3",
@@ -88,27 +91,27 @@
           },
           {
             "name": "clasificada",
-            "description": "Cuándo pasó por el modelo."
+            "description": "Cu\u00e1ndo pas\u00f3 por el modelo."
           }
         ]
       }
     },
     {
       "path": "por_especie.csv",
-      "description": "Lo mismo agregado por especie, 20 en total: cuántas observaciones, cuántas acierta y el acierto contando solo cuando el modelo afirma.",
+      "description": "Lo mismo agregado por especie, 20 en total: cu\u00e1ntas observaciones, cu\u00e1ntas acierta y el acierto contando solo cuando el modelo afirma.",
       "schema": {
         "fields": [
           {
             "name": "especie",
-            "description": "Nombre científico."
+            "description": "Nombre cient\u00edfico."
           },
           {
             "name": "observaciones",
-            "description": "Cuántas se clasificaron."
+            "description": "Cu\u00e1ntas se clasificaron."
           },
           {
             "name": "aciertos",
-            "description": "En cuántas coincidió con GBIF."
+            "description": "En cu\u00e1ntas coincidi\u00f3 con GBIF."
           },
           {
             "name": "acierta_pct",
@@ -120,11 +123,11 @@
           },
           {
             "name": "acierta_si_seguro_pct",
-            "description": "Acierto contando solo cuando el modelo superó su umbral. Es el número que importa."
+            "description": "Acierto contando solo cuando el modelo super\u00f3 su umbral. Es el n\u00famero que importa."
           },
           {
             "name": "veces_seguro",
-            "description": "Cuántas veces superó el umbral."
+            "description": "Cu\u00e1ntas veces super\u00f3 el umbral."
           },
           {
             "name": "confianza_media",
@@ -132,14 +135,14 @@
           },
           {
             "name": "provincias",
-            "description": "En cuántas provincias se registró."
+            "description": "En cu\u00e1ntas provincias se registr\u00f3."
           }
         ]
       }
     },
     {
       "path": "README.md",
-      "description": "La ficha completa: qué es, qué sale de mirarlo y qué se dejó fuera a propósito."
+      "description": "La ficha completa: qu\u00e9 es, qu\u00e9 sale de mirarlo y qu\u00e9 se dej\u00f3 fuera a prop\u00f3sito."
     }
   ]
 }
