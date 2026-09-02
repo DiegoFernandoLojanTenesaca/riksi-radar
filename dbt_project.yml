@@ -1,0 +1,19 @@
+# El modelado del almacén. La tabla que escribe el consumidor es plana y cruda:
+# aquí se convierte en algo que se pueda consultar sin recordar cómo se llenó.
+name: radar
+version: "1.0"
+profile: radar
+
+model-paths: ["modelos"]
+test-paths: ["pruebas"]
+target-path: "objetivo"
+clean-targets: ["objetivo", "dbt_packages"]
+
+models:
+  radar:
+    # Vistas por defecto: el almacén cabe en memoria y una vista siempre está al
+    # día. Las tablas se declaran una a una, donde el coste de recalcular no
+    # compense.
+    +materialized: view
+    marca:
+      +materialized: table

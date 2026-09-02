@@ -1,0 +1,10 @@
+# **dbt va en su propio entorno, con Python 3.11.** No es capricho: con 3.14
+# `dbt-core` 1.12 intenta compilar `dbt-core-experimental-parser`, que es Rust y
+# no tiene rueda, y si se esquiva bajando a 1.10 entonces revienta `mashumaro`
+# con «Field "schema" of type Optional[str] is not serializable». El resto del
+# proyecto sí corre en 3.14.
+#
+#     py -3.11 -m venv .venv-dbt
+#     .venv-dbt/Scripts/pip install -r requirements-dbt.txt
+dbt-core==1.10.23
+dbt-duckdb

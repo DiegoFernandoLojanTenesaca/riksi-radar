@@ -1,0 +1,67 @@
+version: 2
+
+# Las pruebas son el motivo de usar dbt y no un guion de SQL. Cada una es una
+# afirmación sobre los datos que, si deja de ser cierta, para el pipeline en vez
+# de dejar pasar un almacén roto que nadie mira hasta el trimestre siguiente.
+
+sources:
+  - name: crudo
+    description: Lo que escribe el consumidor al leer de Kafka.
+    meta:
+      external_location: "observaciones"
+    tables:
+      - name: observaciones
+
+models:
+  - name: base_observaciones
+    description: >
+      La capa que toca la tabla cruda: limpia, tipa y normaliza. Todo lo demás
+      lee de aquí, así que un cambio de nombre en el consumidor se arregla en un
+      solo sitio.
+    columns:
+      - name: clave
+        description: El identificador de GBIF. Es lo que evita contar dos veces la misma ave.
+        data_tests: [unique, not_null]
+
+      - name: especie_gbif
+        description: La especie que puso quien subió la observación.
+        data_tests: [not_null]
+
+      - name: confianza
+        description: Cuánta le dio el modelo a su primera candidata.
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 1
+              # Nula cuando la foto no se pudo bajar, que no es un error.
+              where: "confianza is not null"
+
+      - name: provincia
+        description: >
+          Normalizada. GBIF escribe «Pichincha», «Pichincha prov» y
+          «Pichincha Province» para el mismo sitio, y sin unificarlas cualquier
+          agrupación las cuenta como tres.
+
+  - name: desacuerdos
+    description: >
+      Donde el modelo y GBIF dicen cosas distintas. No se resuelve quién tiene
+      razón: se ordena por confianza para revisarlas por orden.
+    columns:
+      - name: clave
+        data_tests: [unique, not_null]
+      - name: lectura
+        data_tests:
+          - accepted_values:
+              values: ["revisar primero", "especies parecidas", "el modelo dudaba"]
+
+  - name: por_especie
+    description: Cómo se porta el modelo con cada especie, sobre fotos de campo.
+    columns:
+      - name: especie
+        data_tests: [unique, not_null]
+      - name: acierta_pct
+        data_tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 100}
+      - name: observaciones
+        data_tests:
+          - dbt_utils.accepted_range: {min_value: 1}

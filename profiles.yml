@@ -1,0 +1,10 @@
+# Dónde vive el almacén. Va en el repositorio y no en ~/.dbt porque no tiene
+# secretos: es un fichero DuckDB en una ruta relativa, y así `dbt run` funciona
+# recién clonado sin configurar nada.
+radar:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: datos/radar.duckdb
+      threads: 4

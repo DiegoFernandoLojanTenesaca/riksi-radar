@@ -1,0 +1,6 @@
+# `dbt_utils` trae pruebas que no vienen de serie, como comprobar que un número
+# cae dentro de un rango. Se fija la versión: un paquete que se actualiza solo
+# puede romper el pipeline sin que nadie haya tocado nada.
+packages:
+  - package: dbt-labs/dbt_utils
+    version: 1.3.0

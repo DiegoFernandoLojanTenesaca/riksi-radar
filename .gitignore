@@ -7,3 +7,9 @@ __pycache__/
 *.duckdb
 *.duckdb.wal
 datos/
+
+# dbt: artefactos de compilación y paquetes descargados.
+objetivo/
+dbt_packages/
+logs/
+.venv-dbt/
