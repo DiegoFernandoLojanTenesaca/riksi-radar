@@ -1,6 +1,8 @@
 {
   "title": "Riksi Radar: modelo vs humano en fauna EC",
   "id": "diegofernandoljtn/riksi-radar-ecuador",
+  "subtitle": "400 observaciones del Ecuador: la etiqueta humana contra la del modelo",
+  "description": "400 observaciones de fauna y flora del Ecuador, cada una con **dos respuestas a la misma pregunta**: la especie que puso quien subió la foto a GBIF, y la que vio un clasificador que nunca supo esa etiqueta. Coinciden en 84 % de los casos; lo interesante es el resto.\n\nHay muchos datasets de fauna y muchos de clasificación de imágenes. Lo que no abunda es uno donde las dos etiquetas estén enfrentadas con la confianza del modelo al lado, que es lo que permite preguntarse qué especies se confunden **en el campo** y si un umbral calibrado en validación aguanta fuera de su reparto.\n\nY aguanta: el mismo modelo acierta 78,0 % en su banco de validación y 84,2 % aquí, sobre fotos subidas después y por gente distinta. La confianza además está calibrada — 31 % de acierto en el tramo 0-20 % y 98 % en el 80-100 %, subiendo en cada tramo intermedio.\n\nLos desacuerdos no son ruido. Tres veces *Chelonoidis niger* contra *porteri*, dos tortugas de Galápagos con la taxonomía en disputa entre biólogos; la iguana marina contra la lagartija de lava, que comparten roca y postura.\n\n**No incluye** el nombre de quien subió cada observación: esas personas suben sus fotos para ciencia ciudadana, no para aparecer en un dataset. La URL de la foto sí, con su licencia al lado.\n\nLo genera [riksi-radar](https://github.com/DiegoFernandoLojanTenesaca/riksi-radar) — Kafka, DuckDB y dbt — clasificando con [Riksi](https://github.com/DiegoFernandoLojanTenesaca/riski), un EfficientNet-Lite0 de 3,8 MB que corre en el navegador.",
   "licenses": [
     {
       "name": "CC-BY-SA-4.0"
@@ -8,10 +10,135 @@
   ],
   "keywords": [
     "biology",
-    "computer-vision",
-    "ecuador",
-    "biodiversity",
-    "model-evaluation",
-    "citizen-science"
+    "computer vision",
+    "classification",
+    "animals",
+    "south america"
+  ],
+  "resources": [
+    {
+      "path": "observaciones.csv",
+      "description": "Las 400 observaciones, una por fila, con la etiqueta de GBIF y la del modelo enfrentadas.",
+      "schema": {
+        "fields": [
+          {
+            "name": "clave",
+            "description": "Identificador de la observación en GBIF."
+          },
+          {
+            "name": "especie",
+            "description": "La especie que puso quien subió la foto."
+          },
+          {
+            "name": "cuando",
+            "description": "Fecha de la observación."
+          },
+          {
+            "name": "provincia",
+            "description": "Provincia del Ecuador, normalizada."
+          },
+          {
+            "name": "sitio",
+            "description": "Localidad, cuando el registro la trae."
+          },
+          {
+            "name": "latitud",
+            "description": "Grados decimales."
+          },
+          {
+            "name": "longitud",
+            "description": "Grados decimales."
+          },
+          {
+            "name": "altura",
+            "description": "Metros sobre el nivel del mar, cuando consta."
+          },
+          {
+            "name": "conjunto",
+            "description": "Colección de GBIF de la que procede."
+          },
+          {
+            "name": "licencia",
+            "description": "La de la foto, que es de quien la tomó."
+          },
+          {
+            "name": "foto",
+            "description": "URL pública de la imagen clasificada."
+          },
+          {
+            "name": "modelo_dice",
+            "description": "La especie que vio el clasificador, sin conocer la etiqueta."
+          },
+          {
+            "name": "confianza",
+            "description": "Probabilidad de su primera candidata, de 0 a 1."
+          },
+          {
+            "name": "seguro",
+            "description": "Si superó el umbral calibrado del modelo (0,20)."
+          },
+          {
+            "name": "en_top3",
+            "description": "Si la etiqueta de GBIF estaba entre sus tres candidatas."
+          },
+          {
+            "name": "coincide",
+            "description": "Si especie == modelo_dice."
+          },
+          {
+            "name": "clasificada",
+            "description": "Cuándo pasó por el modelo."
+          }
+        ]
+      }
+    },
+    {
+      "path": "por_especie.csv",
+      "description": "Lo mismo agregado por especie, 20 en total: cuántas observaciones, cuántas acierta y el acierto contando solo cuando el modelo afirma.",
+      "schema": {
+        "fields": [
+          {
+            "name": "especie",
+            "description": "Nombre científico."
+          },
+          {
+            "name": "observaciones",
+            "description": "Cuántas se clasificaron."
+          },
+          {
+            "name": "aciertos",
+            "description": "En cuántas coincidió con GBIF."
+          },
+          {
+            "name": "acierta_pct",
+            "description": "Porcentaje de acierto sobre todas."
+          },
+          {
+            "name": "en_las_tres_pct",
+            "description": "Porcentaje en que la etiqueta estaba en el top 3."
+          },
+          {
+            "name": "acierta_si_seguro_pct",
+            "description": "Acierto contando solo cuando el modelo superó su umbral. Es el número que importa."
+          },
+          {
+            "name": "veces_seguro",
+            "description": "Cuántas veces superó el umbral."
+          },
+          {
+            "name": "confianza_media",
+            "description": "Confianza media de su primera candidata."
+          },
+          {
+            "name": "provincias",
+            "description": "En cuántas provincias se registró."
+          }
+        ]
+      }
+    },
+    {
+      "path": "README.md",
+      "description": "La ficha completa: qué es, qué sale de mirarlo y qué se dejó fuera a propósito."
+    }
   ]
 }

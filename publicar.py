@@ -67,13 +67,74 @@ def exportar():
     ok = cx.execute("SELECT count(*) FROM observaciones WHERE coincide").fetchone()[0]
     cx.close()
 
+    # **Los metadatos no son adorno: Kaggle calcula con ellos una nota de
+    # usabilidad**, y un dataset sin subtítulo ni descripción de sus ficheros
+    # aparece con 3,5 sobre 10 aunque los datos sean buenos. Cada campo de aquí
+    # responde a uno de los avisos que Kaggle muestra al publicar.
     (SALIDA / "dataset-metadata.json").write_text(json.dumps({
         # El título va corto porque Kaggle lo limita a 50 caracteres.
         "title": "Riksi Radar: modelo vs humano en fauna EC",
         "id": "diegofernandoljtn/riksi-radar-ecuador",
+        # Entre 20 y 80 caracteres: Kaggle rechaza la version si se pasa.
+        "subtitle": "400 observaciones del Ecuador: la etiqueta humana "
+                    "contra la del modelo",
+        "description": _descripcion(n, esp, ok),
         "licenses": [{"name": "CC-BY-SA-4.0"}],
-        "keywords": ["biology", "computer-vision", "ecuador", "biodiversity",
-                     "model-evaluation", "citizen-science"],
+        # **Kaggle no acepta etiquetas inventadas**: son un vocabulario cerrado
+        # y rechaza la actualizacion entera si una no existe. «biodiversity» o
+        # «citizen-science» suenan razonables y no estan.
+        "keywords": ["biology", "computer vision", "classification",
+                     "animals", "south america"],
+        # Describir cada fichero y cada columna es lo que evita que quien
+        # descargue tenga que adivinar qué significa `en_top3`.
+        "resources": [
+            {
+                "path": "observaciones.csv",
+                "description": f"Las {n} observaciones, una por fila, con la "
+                               f"etiqueta de GBIF y la del modelo enfrentadas.",
+                "schema": {"fields": [
+                    {"name": "clave", "description": "Identificador de la observación en GBIF."},
+                    {"name": "especie", "description": "La especie que puso quien subió la foto."},
+                    {"name": "cuando", "description": "Fecha de la observación."},
+                    {"name": "provincia", "description": "Provincia del Ecuador, normalizada."},
+                    {"name": "sitio", "description": "Localidad, cuando el registro la trae."},
+                    {"name": "latitud", "description": "Grados decimales."},
+                    {"name": "longitud", "description": "Grados decimales."},
+                    {"name": "altura", "description": "Metros sobre el nivel del mar, cuando consta."},
+                    {"name": "conjunto", "description": "Colección de GBIF de la que procede."},
+                    {"name": "licencia", "description": "La de la foto, que es de quien la tomó."},
+                    {"name": "foto", "description": "URL pública de la imagen clasificada."},
+                    {"name": "modelo_dice", "description": "La especie que vio el clasificador, sin conocer la etiqueta."},
+                    {"name": "confianza", "description": "Probabilidad de su primera candidata, de 0 a 1."},
+                    {"name": "seguro", "description": "Si superó el umbral calibrado del modelo (0,20)."},
+                    {"name": "en_top3", "description": "Si la etiqueta de GBIF estaba entre sus tres candidatas."},
+                    {"name": "coincide", "description": "Si especie == modelo_dice."},
+                    {"name": "clasificada", "description": "Cuándo pasó por el modelo."},
+                ]},
+            },
+            {
+                "path": "por_especie.csv",
+                "description": f"Lo mismo agregado por especie, {esp} en total: "
+                               f"cuántas observaciones, cuántas acierta y el "
+                               f"acierto contando solo cuando el modelo afirma.",
+                "schema": {"fields": [
+                    {"name": "especie", "description": "Nombre científico."},
+                    {"name": "observaciones", "description": "Cuántas se clasificaron."},
+                    {"name": "aciertos", "description": "En cuántas coincidió con GBIF."},
+                    {"name": "acierta_pct", "description": "Porcentaje de acierto sobre todas."},
+                    {"name": "en_las_tres_pct", "description": "Porcentaje en que la etiqueta estaba en el top 3."},
+                    {"name": "acierta_si_seguro_pct", "description": "Acierto contando solo cuando el modelo superó su umbral. Es el número que importa."},
+                    {"name": "veces_seguro", "description": "Cuántas veces superó el umbral."},
+                    {"name": "confianza_media", "description": "Confianza media de su primera candidata."},
+                    {"name": "provincias", "description": "En cuántas provincias se registró."},
+                ]},
+            },
+            {
+                "path": "README.md",
+                "description": "La ficha completa: qué es, qué sale de mirarlo "
+                               "y qué se dejó fuera a propósito.",
+            },
+        ],
     }, ensure_ascii=False, indent=2), encoding="utf-8")
 
     (SALIDA / "README.md").write_text(_ficha(n, esp, ok), encoding="utf-8")
@@ -81,6 +142,41 @@ def exportar():
     print(f"  escrito en {SALIDA.name}/: " +
           ", ".join(sorted(f.name for f in SALIDA.iterdir())))
     return n
+
+
+def _descripcion(n, esp, ok):
+    """La descripción que Kaggle enseña en la portada del dataset.
+
+    Corta a propósito: quien llega decide en diez segundos si le sirve, y para
+    lo demás está el README.
+    """
+    return (
+        f"{n} observaciones de fauna y flora del Ecuador, cada una con **dos "
+        f"respuestas a la misma pregunta**: la especie que puso quien subió la "
+        f"foto a GBIF, y la que vio un clasificador que nunca supo esa "
+        f"etiqueta. Coinciden en {100*ok/n:.0f} % de los casos; lo interesante "
+        f"es el resto.\n\n"
+        f"Hay muchos datasets de fauna y muchos de clasificación de imágenes. "
+        f"Lo que no abunda es uno donde las dos etiquetas estén enfrentadas con "
+        f"la confianza del modelo al lado, que es lo que permite preguntarse "
+        f"qué especies se confunden **en el campo** y si un umbral calibrado en "
+        f"validación aguanta fuera de su reparto.\n\n"
+        f"Y aguanta: el mismo modelo acierta 78,0 % en su banco de validación y "
+        f"84,2 % aquí, sobre fotos subidas después y por gente distinta. La "
+        f"confianza además está calibrada — 31 % de acierto en el tramo 0-20 % "
+        f"y 98 % en el 80-100 %, subiendo en cada tramo intermedio.\n\n"
+        f"Los desacuerdos no son ruido. Tres veces *Chelonoidis niger* contra "
+        f"*porteri*, dos tortugas de Galápagos con la taxonomía en disputa entre "
+        f"biólogos; la iguana marina contra la lagartija de lava, que comparten "
+        f"roca y postura.\n\n"
+        f"**No incluye** el nombre de quien subió cada observación: esas "
+        f"personas suben sus fotos para ciencia ciudadana, no para aparecer en "
+        f"un dataset. La URL de la foto sí, con su licencia al lado.\n\n"
+        f"Lo genera [riksi-radar](https://github.com/DiegoFernandoLojanTenesaca/"
+        f"riksi-radar) — Kafka, DuckDB y dbt — clasificando con "
+        f"[Riksi](https://github.com/DiegoFernandoLojanTenesaca/riski), un "
+        f"EfficientNet-Lite0 de 3,8 MB que corre en el navegador."
+    )
 
 
 def _ficha(n, esp, ok):

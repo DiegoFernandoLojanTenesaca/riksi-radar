@@ -19,3 +19,5 @@ logs/
 
 # El dataset exportado se regenera con publicar.py.
 kaggle/*.csv
+kaggle/descripcion.md
+kaggle/portada.svg
