@@ -16,3 +16,6 @@ logs/
 
 # El identificador anonimo de dbt, por maquina. No es del proyecto.
 .user.yml
+
+# El dataset exportado se regenera con publicar.py.
+kaggle/*.csv
