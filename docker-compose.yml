@@ -1,0 +1,32 @@
+# La infraestructura del radar. Un solo `docker compose up -d` y está todo.
+#
+# **Kafka sin ZooKeeper.** Desde la 3.3 Kafka trae KRaft, su propio consenso, y
+# el mismo proceso hace de broker y de controlador. Un contenedor en vez de dos,
+# y una pieza menos que explicar y que se caiga.
+
+services:
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: radar-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Lo único que va por entorno. El resto está en kafka.properties, y allí
+      # se explica por qué: configurarlo por variables hacía que el formateo del
+      # almacenamiento validara la config de la imagen en vez de la nuestra, y
+      # el contenedor no llegaba a arrancar.
+      CLUSTER_ID: riksi-radar-cluster-01
+    volumes:
+      - ./kafka.properties:/mnt/shared/config/server.properties:ro
+      - kafka-datos:/var/lib/kafka/data
+    healthcheck:
+      # Pedir la lista de topics prueba que el broker responde de verdad, no
+      # solo que el puerto está abierto.
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  kafka-datos:
