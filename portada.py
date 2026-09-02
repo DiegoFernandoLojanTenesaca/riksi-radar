@@ -23,7 +23,11 @@ SALIDA = AQUI / "kaggle" / "portada.png"
 # misma familia sin tener que decirlo.
 BASALTO, LIQUEN, PAPEL, TENUE = "#14181b", "#c7c24b", "#e4e5df", "#8a938d"
 
-ANCHO, ALTO = 1200, 630          # la proporción que Kaggle usa en el listado
+# Kaggle recorta la portada a un rectángulo ancho en el listado y la enseña
+# pequeña, así que el dibujo tiene que llenar el lienzo. La primera versión
+# usaba 1200x630 con barras de 130 px y márgenes de 150: se veía como cinco
+# palitos perdidos en un fondo negro.
+ANCHO, ALTO = 1200, 600
 
 
 def datos():
@@ -50,50 +54,63 @@ def datos():
 
 
 def svg(filas, total):
-    izq, base, ancho_barra, hueco = 150, 500, 130, 45
-    alto_max = 300
+    """Cinco barras que llenan el lienzo, no cinco palitos en un fondo.
+
+    El ancho de barra sale de dividir el espacio disponible, en vez de estar
+    fijado a ojo: así el dibujo se adapta si algún día hay más tramos.
+    """
+    # 190 arriba deja sitio a la cifra sobre la barra mas alta: con 175 el «98 %»
+    # rozaba el subtitulo. Y 105 abajo separa el pie de las etiquetas.
+    izq, der, arriba, abajo = 70, 70, 190, 105
+    util = ANCHO - izq - der
+    base = ALTO - abajo
+    alto_max = base - arriba
+
+    hueco = 22
+    ancho_barra = (util - hueco * (len(filas) - 1)) / len(filas)
 
     partes = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{ANCHO}" height="{ALTO}" '
         f'viewBox="0 0 {ANCHO} {ALTO}">',
         f'<rect width="{ANCHO}" height="{ALTO}" fill="{BASALTO}"/>',
-        f'<text x="{izq}" y="78" fill="{PAPEL}" font-size="42" font-weight="600" '
+        f'<text x="{izq}" y="66" fill="{PAPEL}" font-size="46" font-weight="600" '
         f'font-family="Georgia, serif">Riksi Radar</text>',
-        f'<text x="{izq}" y="118" fill="{LIQUEN}" font-size="23" '
+        f'<text x="{izq}" y="108" fill="{LIQUEN}" font-size="27" '
         f'font-family="system-ui, sans-serif">'
         f'La confianza del modelo predice el acierto</text>',
-        f'<text x="{izq}" y="152" fill="{TENUE}" font-size="17" '
+        f'<text x="{izq}" y="142" fill="{TENUE}" font-size="18" '
         f'font-family="system-ui, sans-serif">'
         f'{total} observaciones del Ecuador · medido en el campo, no en validación</text>',
     ]
 
     for i, (tramo, n, acierta) in enumerate(filas):
         x = izq + i * (ancho_barra + hueco)
-        alto = max(6, alto_max * acierta / 100)
+        alto = max(8, alto_max * acierta / 100)
         y = base - alto
-        # La barra se llena en proporción al acierto; el contorno marca el 100 %
-        # para que se vea cuánto falta sin tener que leer el eje.
+        centro = x + ancho_barra / 2
+        # El contorno marca el 100 %: sin él no se ve cuánto falta y las barras
+        # parecen absolutas en vez de porcentajes.
         partes += [
-            f'<rect x="{x}" y="{base - alto_max}" width="{ancho_barra}" '
-            f'height="{alto_max}" fill="none" stroke="{TENUE}" '
-            f'stroke-width="1" opacity=".25"/>',
-            f'<rect x="{x}" y="{y:.0f}" width="{ancho_barra}" height="{alto:.0f}" '
-            f'fill="{LIQUEN}" rx="4"/>',
-            f'<text x="{x + ancho_barra/2:.0f}" y="{y - 14:.0f}" fill="{PAPEL}" '
-            f'font-size="27" font-weight="600" text-anchor="middle" '
+            f'<rect x="{x:.0f}" y="{arriba}" width="{ancho_barra:.0f}" '
+            f'height="{alto_max}" fill="{PAPEL}" opacity=".05" rx="5"/>',
+            f'<rect x="{x:.0f}" y="{y:.0f}" width="{ancho_barra:.0f}" '
+            f'height="{alto:.0f}" fill="{LIQUEN}" rx="5"/>',
+            f'<text x="{centro:.0f}" y="{y - 16:.0f}" fill="{PAPEL}" '
+            f'font-size="32" font-weight="600" text-anchor="middle" '
             f'font-family="system-ui, sans-serif">{acierta:.0f}%</text>',
-            f'<text x="{x + ancho_barra/2:.0f}" y="{base + 30}" fill="{PAPEL}" '
-            f'font-size="18" text-anchor="middle" '
+            f'<text x="{centro:.0f}" y="{base + 30}" fill="{PAPEL}" '
+            f'font-size="19" text-anchor="middle" '
             f'font-family="system-ui, sans-serif">{tramo}%</text>',
-            f'<text x="{x + ancho_barra/2:.0f}" y="{base + 52}" fill="{TENUE}" '
-            f'font-size="14" text-anchor="middle" '
+            f'<text x="{centro:.0f}" y="{base + 52}" fill="{TENUE}" '
+            f'font-size="15" text-anchor="middle" '
             f'font-family="system-ui, sans-serif">n={n}</text>',
         ]
 
     partes += [
-        f'<text x="{izq}" y="{base + 100}" fill="{TENUE}" font-size="16" '
+        f'<text x="{izq}" y="{ALTO - 22}" fill="{TENUE}" font-size="16" '
         f'font-family="system-ui, sans-serif">'
-        f'confianza que el modelo dio a su respuesta  →  cuánto acertó de verdad</text>',
+        f'confianza que el modelo dio a su respuesta  →  cuánto acertó de verdad'
+        f'</text>',
         "</svg>",
     ]
     return "\n".join(partes)
