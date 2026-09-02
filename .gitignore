@@ -13,3 +13,6 @@ objetivo/
 dbt_packages/
 logs/
 .venv-dbt/
+
+# El identificador anonimo de dbt, por maquina. No es del proyecto.
+.user.yml
