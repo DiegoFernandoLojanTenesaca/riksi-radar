@@ -17,6 +17,7 @@ pasada volvería a emitir lo mismo y el almacén contaría dos veces la misma av
 
 import argparse
 import json
+import os
 import pathlib
 import sqlite3
 import sys
@@ -27,7 +28,11 @@ from datetime import date, timedelta
 
 AQUI = pathlib.Path(__file__).parent
 VISTOS = AQUI / "datos" / "vistos.db"
-CLASES = pathlib.Path(r"D:\CLAUDE PROYECTOS\riksi\docs\modelo\clases.json")
+# La ruta sale del entorno, con la de esta máquina como respaldo. Estaba fija y
+# el CI no podía correr: allí el modelo se clona en /tmp, y una ruta de Windows
+# escrita a mano no existe en ningún otro sitio.
+CLASES = pathlib.Path(os.environ.get(
+    "RIKSI_MODELO", r"D:\CLAUDE PROYECTOS\riksi\docs\modelo")) / "clases.json"
 
 GBIF = "https://api.gbif.org/v1"
 AGENTE = "riksi-radar/0.1 (https://github.com/DiegoFernandoLojanTenesaca)"

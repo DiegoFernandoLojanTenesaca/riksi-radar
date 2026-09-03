@@ -19,6 +19,7 @@ autoridad que no tiene.
 import argparse
 import io
 import json
+import os
 import pathlib
 import sys
 import time
@@ -29,7 +30,11 @@ import numpy as np
 
 AQUI = pathlib.Path(__file__).parent
 ALMACEN = AQUI / "datos" / "radar.duckdb"
-MODELO = pathlib.Path(r"D:\CLAUDE PROYECTOS\riksi\docs\modelo")
+# Igual que en el productor: la ruta sale del entorno para que el CI y el
+# contenedor puedan apuntar a donde tengan el modelo. Fija, solo funcionaba en
+# la máquina donde se escribió.
+MODELO = pathlib.Path(os.environ.get("RIKSI_MODELO",
+                                     r"D:\CLAUDE PROYECTOS\riksi\docs\modelo"))
 
 TEMA = "observaciones"
 AGENTE = "riksi-radar/0.1 (https://github.com/DiegoFernandoLojanTenesaca)"
