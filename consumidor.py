@@ -315,7 +315,9 @@ def prueba():
 
     # El modelo, sobre una foto que Riksi ya usa de prueba: si el preprocesado
     # se desviara, esto acertaría menos y nadie se enteraría.
-    foto = pathlib.Path(r"D:\CLAUDE PROYECTOS\riksi\docs\prueba\1677344033_196.jpg")
+    # La foto vive junto al modelo, así que se deriva de él en vez de escribir
+    # otra ruta fija: era lo que hacía fallar esta comprobación en el CI.
+    foto = MODELO.parent / "prueba" / "1677344033_196.jpg"
     visto = clasificar(foto.read_bytes())
     assert visto["dice"] == "Aglaeactis cupripennis", visto
     assert visto["confianza"] > 0.7 and visto["seguro"], visto
