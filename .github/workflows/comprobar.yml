@@ -1,0 +1,68 @@
+# Que las comprobaciones pasen hoy, no solo el día que se escribieron.
+#
+# **Solo lo que no necesita red ni Kafka.** El productor habla con GBIF y el
+# consumidor con un broker; montar los dos en cada push sería lento, frágil y
+# dependería de que una API ajena esté de buen humor. Aquí corre lo que tiene
+# lógica propia -el recorte de campos, el almacén, el montaje del flujo- y eso
+# es lo que se rompe al editar.
+
+name: comprobar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # A mano, para cuando se quiera confirmar que nada se ha podrido sin haber
+  # tocado el código.
+  workflow_dispatch:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # La misma que usa el proyecto en local. dbt no corre aquí -vive en su
+          # propio entorno con 3.11- así que esto no lo arrastra.
+          python-version: "3.12"
+          cache: pip
+
+      - name: instalar
+        run: pip install -r requirements.txt
+
+      - name: el modelo de Riksi
+        # Se clona en vez de copiarlo: son 3,8 MB versionados en otro sitio que
+        # cambian cuando se reentrena allí, y duplicarlos crearía dos verdades.
+        run: |
+          git clone --depth 1 https://github.com/DiegoFernandoLojanTenesaca/riski.git /tmp/riksi
+          echo "RIKSI_MODELO=/tmp/riksi/docs/modelo" >> $GITHUB_ENV
+
+      - name: el productor recorta bien
+        run: python productor.py --comprobar
+
+      - name: el consumidor clasifica y no duplica
+        run: python consumidor.py --comprobar
+
+  sql:
+    # dbt en su propio trabajo y con su propia versión de Python, por lo mismo
+    # que en local: no corre en las nuevas.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: instalar dbt
+        run: |
+          pip install -r requirements-dbt.txt
+          dbt deps --profiles-dir .
+
+      - name: los modelos compilan
+        # `parse` sin base de datos: comprueba que el SQL y las referencias
+        # entre modelos son válidas. Correr las pruebas de verdad exigiría el
+        # almacén, que se genera con datos de GBIF y no cabe en un CI.
+        run: dbt parse --profiles-dir .

@@ -34,8 +34,8 @@ no tiene.
 
 ## Lo que sale
 
-Sobre 39 observaciones reales: **30 coinciden, 9 no**. Y los desacuerdos tienen
-sentido biológico, no son ruido:
+Sobre 400 observaciones reales: **337 coinciden, 63 no**. Y los desacuerdos
+tienen sentido biológico, no son ruido:
 
 | GBIF dice | el modelo ve | |
 |---|---|---|
@@ -43,9 +43,33 @@ sentido biológico, no son ruido:
 | *Amblyrhynchus cristatus* | *Microlophus albemarlensis* | iguana marina y lagartija de lava: comparten roca y postura |
 | *Apis mellifera* | *Xylocopa darwini* | abeja europea contra abeja carpintera |
 
-Y de esos nueve, la propia tabla dice que **solo uno merece revisión**: cuatro
-son especies parecidas con la etiqueta correcta en el top 3, y cuatro son el
-modelo dudando por debajo de su umbral.
+Y la propia tabla los ordena: **44 de los 63 tienen la etiqueta de GBIF en el
+top 3**, o sea que el modelo la consideró y la puso segunda. Los otros 19 son
+discrepancias de verdad, y esos son los que merecen mirarse.
+
+### El sesgo del conjunto, que hay que decir antes de leer los números
+
+**Una sola especie es el 32 % de las observaciones.** *Amblyrhynchus cristatus*,
+la iguana marina, aparece 128 veces de 400; las tres primeras juntas son la
+mitad del conjunto, y solo hay 20 de las 100 especies que el modelo conoce.
+
+Eso no es un fallo del pipeline: es cómo se reparte la ciencia ciudadana. La
+gente fotografía lo que ve, y en Galápagos ve iguanas marinas. Pero cambia cómo
+hay que leer el acierto global:
+
+| | acierto |
+|---|---|
+| por observación | 84,2 % |
+| **promediando especies** | **78,7 %** |
+
+Los 5,5 puntos de diferencia **son el sesgo**. El 84,2 % está dominado por
+especies fáciles y muy fotografiadas; el 78,7 % da el mismo peso a la iguana
+marina que a la tortuga que aparece tres veces.
+
+Y ese segundo número dice algo distinto: **78,7 % en el campo contra 78,0 % en
+validación.** No es que el modelo mejore fuera de su reparto, como sugería la
+lectura ingenua — es que se comporta prácticamente igual, que es una conclusión
+más aburrida y bastante más creíble.
 
 **El umbral calibrado se valida solo.** Es el número que más se ve:
 

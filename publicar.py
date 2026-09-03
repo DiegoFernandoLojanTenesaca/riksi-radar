@@ -194,9 +194,15 @@ def _descripcion(n, esp, ok):
         f"qué especies se confunden **en el campo** y si un umbral calibrado en "
         f"validación aguanta fuera de su reparto.\n\n"
         f"Y aguanta: el mismo modelo acierta 78,0 % en su banco de validación y "
-        f"84,2 % aquí, sobre fotos subidas después y por gente distinta. La "
-        f"confianza además está calibrada — 31 % de acierto en el tramo 0-20 % "
-        f"y 98 % en el 80-100 %, subiendo en cada tramo intermedio.\n\n"
+        f"78,7 % aquí promediando especies, sobre fotos subidas después y por "
+        f"gente distinta. La confianza además está calibrada — 31 % de acierto "
+        f"en el tramo 0-20 % y 98 % en el 80-100 %, subiendo en cada tramo "
+        f"intermedio.\n\n"
+        f"**Ojo con el acierto global.** Por observación sale 84,2 %, pero una "
+        f"sola especie -la iguana marina- es el 32 % del conjunto y las tres "
+        f"primeras son la mitad. Promediando especies baja a 78,7 %, y ése es "
+        f"el número comparable. No es un fallo del pipeline: es cómo se reparte "
+        f"la ciencia ciudadana, y por eso el conjunto trae `por_especie.csv`.\n\n"
         f"Los desacuerdos no son ruido. Tres veces *Chelonoidis niger* contra "
         f"*porteri*, dos tortugas de Galápagos con la taxonomía en disputa entre "
         f"biólogos; la iguana marina contra la lagartija de lava, que comparten "
@@ -255,6 +261,18 @@ que de verdad importa.
 
 ## Lo que sale de mirarlo
 
+**El conjunto está sesgado, y conviene saberlo antes de usarlo.** Una sola
+especie —*Amblyrhynchus cristatus*— es el 32 % de las observaciones, y las tres
+primeras son la mitad. Solo aparecen 20 de las 100 especies que el modelo
+conoce. Así se reparte la ciencia ciudadana: la gente fotografía lo que ve.
+
+Por eso el acierto global tiene dos lecturas, y la segunda es la que compara:
+
+| | acierto |
+|---|---|
+| por observación | 84,2 % |
+| **promediando especies** | **78,7 %** |
+
 **El umbral funciona.** El modelo acierta un 85 % cuando dice estar seguro y un
 33 % cuando no. El umbral no existe para que responda siempre, sino para que las
 respuestas dadas sean fiables.
@@ -268,9 +286,9 @@ respuestas dadas sean fiables.
 - *Apis mellifera* contra *Xylocopa darwini*: abeja europea contra carpintera.
 
 **Y no hay deriva.** El mismo modelo acierta 78,0 % en su banco de validación y
-84,2 % aquí, sobre fotos que se subieron después y de gente distinta. Que suba no
-significa que el modelo haya mejorado: significa que al campo llegan sobre todo
-especies fáciles y muy fotografiadas.
+**78,7 %** aquí promediando especies, sobre fotos que se subieron después y de
+gente distinta. Se comporta igual fuera del reparto donde se entrenó — que es
+una conclusión más aburrida que «mejora», y bastante más creíble.
 
 ## Qué NO está aquí
 

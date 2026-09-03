@@ -41,6 +41,18 @@ que de verdad importa.
 
 ## Lo que sale de mirarlo
 
+**El conjunto está sesgado, y conviene saberlo antes de usarlo.** Una sola
+especie —*Amblyrhynchus cristatus*— es el 32 % de las observaciones, y las tres
+primeras son la mitad. Solo aparecen 20 de las 100 especies que el modelo
+conoce. Así se reparte la ciencia ciudadana: la gente fotografía lo que ve.
+
+Por eso el acierto global tiene dos lecturas, y la segunda es la que compara:
+
+| | acierto |
+|---|---|
+| por observación | 84,2 % |
+| **promediando especies** | **78,7 %** |
+
 **El umbral funciona.** El modelo acierta un 85 % cuando dice estar seguro y un
 33 % cuando no. El umbral no existe para que responda siempre, sino para que las
 respuestas dadas sean fiables.
@@ -54,9 +66,9 @@ respuestas dadas sean fiables.
 - *Apis mellifera* contra *Xylocopa darwini*: abeja europea contra carpintera.
 
 **Y no hay deriva.** El mismo modelo acierta 78,0 % en su banco de validación y
-84,2 % aquí, sobre fotos que se subieron después y de gente distinta. Que suba no
-significa que el modelo haya mejorado: significa que al campo llegan sobre todo
-especies fáciles y muy fotografiadas.
+**78,7 %** aquí promediando especies, sobre fotos que se subieron después y de
+gente distinta. Se comporta igual fuera del reparto donde se entrenó — que es
+una conclusión más aburrida que «mejora», y bastante más creíble.
 
 ## Qué NO está aquí
 
