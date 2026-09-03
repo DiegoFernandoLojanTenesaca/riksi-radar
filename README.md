@@ -24,13 +24,16 @@ especies             la etiqueta     versiones
 ```
 
 Cuando las dos coinciden no hay noticia. Cuando no, hay exactamente tres
-explicaciones y ninguna es aburrida: **el modelo se equivocó**, **la observación
-está mal identificada**, o **la foto no muestra lo que dice el registro**.
+explicaciones: **el modelo se equivocó**, **la observación está mal
+identificada**, o **la etiqueta de GBIF se quedó vieja**.
 
 El radar no decide cuál. Guarda las dos versiones con la confianza del modelo y
 las ordena para que quien las revise empiece por las que más pesan. Un pipeline
 que resolviera el desacuerdo por su cuenta estaría inventando una autoridad que
 no tiene.
+
+Pero la tercera explicación sí se puede comprobar, y eso no es inventarse
+autoridad: es preguntar a la fuente. Lo hace [`contrastar.py`](#el-desfase-de-gbif).
 
 ## Lo que sale
 
@@ -39,13 +42,45 @@ tienen sentido biológico, no son ruido:
 
 | GBIF dice | el modelo ve | |
 |---|---|---|
-| *Chelonoidis niger* | *Chelonoidis porteri* ×3 | dos tortugas de Galápagos con la **taxonomía en disputa** entre biólogos |
+| *Chelonoidis porteri* ×8 | *Chelonoidis niger* | dos tortugas de Galápagos; **aquí acertaba el modelo**, ver abajo |
 | *Amblyrhynchus cristatus* | *Microlophus albemarlensis* | iguana marina y lagartija de lava: comparten roca y postura |
 | *Apis mellifera* | *Xylocopa darwini* | abeja europea contra abeja carpintera |
 
 Y la propia tabla los ordena: **44 de los 63 tienen la etiqueta de GBIF en el
 top 3**, o sea que el modelo la consideró y la puso segunda. Los otros 19 son
 discrepancias de verdad, y esos son los que merecen mirarse.
+
+### El desfase de GBIF
+
+**GBIF publica instantáneas periódicas, no un espejo en vivo.** Una observación
+que iNaturalist ya corrigió puede seguir en GBIF con la identificación anterior.
+Si eso pasara aquí, parte de los desacuerdos no serían fallos del modelo.
+
+Se comprueba yendo a la fuente: GBIF guarda en `catalogNumber` el identificador
+de iNaturalist, así que se puede preguntar cuál es la identificación **de hoy**.
+
+```bash
+python contrastar.py       # los 63, contra iNaturalist · ~2 min
+```
+
+| de los 63 desacuerdos | |
+|---|---|
+| la etiqueta sigue igual | 39 |
+| precisada a subespecie, misma especie → falló igual | 16 |
+| **la etiqueta era vieja: el modelo acertaba** | **8** |
+
+Los ocho son el mismo caso. *Chelonoidis porteri*, la tortuga de Santa Cruz,
+pasó a ser **subespecie** de *C. niger*: hoy iNaturalist la llama *Chelonoidis
+niger porteri*. El modelo decía `Chelonoidis niger`, y bajo la taxonomía actual
+tenía razón. No era una disputa entre biólogos —eso decía este README antes—,
+era un desfase de sincronización.
+
+Descontándolos: **86,2 %** por observación, 81,2 % promediando especies. Los 55
+restantes son fallos reales, y los 63 son de grado *research*, o sea que se
+discrepa contra identificaciones que la comunidad ya confirmó.
+
+El resultado queda en [`contraste.json`](contraste.json), versionado porque
+tarda dos minutos de peticiones a dos APIs y sostiene las cifras de arriba.
 
 ### El sesgo del conjunto, que hay que decir antes de leer los números
 
@@ -70,6 +105,10 @@ Y ese segundo número dice algo distinto: **78,7 % en el campo contra 78,0 % en
 validación.** No es que el modelo mejore fuera de su reparto, como sugería la
 lectura ingenua — es que se comporta prácticamente igual, que es una conclusión
 más aburrida y bastante más creíble.
+
+Descontar las ocho etiquetas viejas lo sube a 81,2 %, pero conviene no apoyarse
+mucho ahí: las ocho son de un solo taxón de veinte, así que la corrección arregla
+una especie entera y ninguna otra. Es el mismo sesgo por otra vía.
 
 **El umbral calibrado se valida solo.** Es el número que más se ve:
 
@@ -114,6 +153,7 @@ O cada pieza por separado:
 python productor.py --dias 3      # GBIF → Kafka
 python consumidor.py --tope 50    # Kafka → modelo → DuckDB
 .venv-dbt/Scripts/dbt build --profiles-dir .
+python contrastar.py              # los desacuerdos, contra iNaturalist
 ```
 
 Cada módulo se comprueba solo, sin tocar red ni Kafka:
@@ -122,6 +162,8 @@ Cada módulo se comprueba solo, sin tocar red ni Kafka:
 python productor.py --comprobar
 python consumidor.py --comprobar
 python flujo.py --comprobar
+python contrastar.py --comprobar  # este sí pide una observación, para
+                                  # comprobar que el enlace sigue vivo
 ```
 
 ## Las tablas
